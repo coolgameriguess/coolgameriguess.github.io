@@ -1,0 +1,1 @@
+window.__scGame=1
