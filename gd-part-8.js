@@ -859,11 +859,17 @@ startEl.style.display = 'none';
 }, 1700);
 function loadModule() {
 GDAssets.loadScript().then(function (code) {
-// Discord's CSP blocks inline <script> execution (even ones created via
-// DOM APIs at runtime) unless nonced — but it explicitly allows
-// 'unsafe-eval'. Indirect eval (the (0, eval) form) runs the code in
-// global scope, matching how an injected <script> tag would behave.
-(0, eval)(code);
+// Discord's CSP blocks both inline <script> execution and (apparently)
+// eval, regardless of 'unsafe-eval' in the header text — but it
+// explicitly allows 'blob:' as a script-src source. A <script src="blob:...">
+// is an external script load, not inline execution, so it's unaffected
+// by either restriction.
+var blobUrl = URL.createObjectURL(new Blob([code], {type: 'application/javascript'}));
+var s = document.createElement('script');
+s.src = blobUrl;
+s.onload = function () { URL.revokeObjectURL(blobUrl); };
+s.onerror = function (e) { URL.revokeObjectURL(blobUrl); GDAssets.fail(new Error('Game script failed to execute from blob URL')); };
+document.body.appendChild(s);
 }).catch(function (e) {
 GDAssets.fail(e);
 });
