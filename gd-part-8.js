@@ -859,9 +859,11 @@ startEl.style.display = 'none';
 }, 1700);
 function loadModule() {
 GDAssets.loadScript().then(function (code) {
-var s = document.createElement('script');
-s.textContent = code;
-document.body.appendChild(s);
+// Discord's CSP blocks inline <script> execution (even ones created via
+// DOM APIs at runtime) unless nonced — but it explicitly allows
+// 'unsafe-eval'. Indirect eval (the (0, eval) form) runs the code in
+// global scope, matching how an injected <script> tag would behave.
+(0, eval)(code);
 }).catch(function (e) {
 GDAssets.fail(e);
 });
